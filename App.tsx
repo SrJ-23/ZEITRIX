@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import QRRegistration from './components/QRRegistration';
@@ -18,6 +19,7 @@ import { supabase } from './lib/supabase';
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -98,9 +100,26 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="min-h-screen bg-slate-50 flex">
-        {user && <Sidebar user={user} onLogout={handleLogout} />}
+        {user && (
+          <Sidebar
+            user={user}
+            onLogout={handleLogout}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+        )}
 
-        <main className={`flex-1 transition-all ${user ? 'ml-64 p-10' : ''}`}>
+        {/* Botón hamburguesa — solo visible en móvil cuando hay usuario */}
+        {user && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="fixed top-4 left-4 z-30 lg:hidden bg-slate-900 text-white p-3 rounded-2xl shadow-xl shadow-slate-900/30 hover:bg-slate-800 transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+
+        <main className={`flex-1 transition-all duration-300 ${user ? 'lg:ml-64 p-4 pt-16 lg:p-10 lg:pt-10' : ''}`}>
           <Routes>
             {!user ? (
               <Route path="*" element={<Login onLogin={(u) => setUser(u)} />} />
