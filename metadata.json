@@ -1,0 +1,7 @@
+{
+  "name": "EduControl Pro - Sistema Escolar",
+  "description": "Sistema integral de gestión académica y control de ingreso mediante QR con notificaciones automáticas por WhatsApp para colegios pequeños.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
