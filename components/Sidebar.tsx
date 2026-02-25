@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
         <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-lg">
           <GraduationCap className="w-6 h-6 text-white" />
         </div>
-        <h1 className="text-xl font-black tracking-tighter">EduControl<span className="text-indigo-400">Pro</span></h1>
+        <h1 className="text-xl font-black tracking-tighter">ZEI<span className="text-indigo-400">TRIX</span></h1>
       </div>
 
       <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto mt-4">
