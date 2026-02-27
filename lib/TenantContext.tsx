@@ -39,27 +39,30 @@ export const useTenant = () => useContext(TenantContext);
 const extractSlug = (): string | null => {
     const hostname = window.location.hostname;
 
-    // Desarrollo local → no hay subdominio
+    // Desarrollo local → buscar ?tenant=
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        // En desarrollo, se puede usar un query param: ?tenant=san-jose
         const params = new URLSearchParams(window.location.search);
         return params.get('tenant');
     }
 
-    const parts = hostname.split('.');
-
-    // dominio.vercel.app (3 partes) → parts[0] podría ser subdominio
-    // sub.dominio.vercel.app (4 partes) → parts[0] es subdominio
-    // dominio.com (2 partes) → no hay subdominio
-    // sub.dominio.com (3 partes) → parts[0] es subdominio
-
-    // Para Vercel: xxx.vercel.app = sin sub, xxx.yyy.vercel.app = con sub
-    if (hostname.endsWith('.vercel.app')) {
-        if (parts.length >= 4) return parts[0]; // sub.proyecto.vercel.app
-        return null; // proyecto.vercel.app (sin subdominio)
+    // Portal Principal → Ignorar si es el dominio base
+    if (hostname === 'zeitrix.vercel.app' || hostname === 'zeitrix.com') {
+        return null;
     }
 
-    // Para dominio propio: xxx.zeitrix.com = con sub
+    const parts = hostname.split('.');
+
+    // Caso Vercel: xxx.vercel.app o sub.xxx.vercel.app
+    if (hostname.endsWith('.vercel.app')) {
+        // sub.dominio.vercel.app (4 partes o más)
+        if (parts.length >= 4) return parts[0];
+
+        // dominio.vercel.app (3 partes)
+        // Ejemplo: zeitrix-las-praderas.vercel.app -> retorna 'zeitrix-las-praderas'
+        return parts[0];
+    }
+
+    // Caso Dominio Propio: sub.tudominio.com (3 partes o más)
     if (parts.length >= 3) return parts[0];
 
     return null;
