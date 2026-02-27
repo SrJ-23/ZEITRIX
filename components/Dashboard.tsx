@@ -11,8 +11,11 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 
 const Dashboard: React.FC<{ user: any }> = ({ user }) => {
+  const { tenant } = useTenant();
+  const colegioId = tenant?.id ?? null;
   const isTeacher = user.role === 'profesor';
   const isParent = user.role === 'padre';
   const [parentTab, setParentTab] = useState<'notas' | 'asistencia'>('notas');
@@ -36,13 +39,13 @@ const Dashboard: React.FC<{ user: any }> = ({ user }) => {
     if (!isParent) {
       const fetchData = async () => {
         // --- 1. STATS GLOBALES ---
-        const { count: countAlumnos } = await supabase
-          .from('alumnos')
-          .select('*', { count: 'exact', head: true });
+        const alumnosQuery = supabase.from('alumnos').select('*', { count: 'exact', head: true });
+        if (colegioId) alumnosQuery.eq('colegio_id', colegioId);
+        const { count: countAlumnos } = await alumnosQuery;
 
-        const { count: countDocentes } = await supabase
-          .from('profesores')
-          .select('*', { count: 'exact', head: true });
+        const docentesQuery = supabase.from('profesores').select('*', { count: 'exact', head: true });
+        if (colegioId) docentesQuery.eq('colegio_id', colegioId);
+        const { count: countDocentes } = await docentesQuery;
 
         const today = new Date().toISOString().split('T')[0];
         const { count: countAsistencia } = await supabase

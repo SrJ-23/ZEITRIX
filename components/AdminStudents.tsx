@@ -20,6 +20,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../lib/supabase';
 import { createAuthUser } from '../lib/supabaseAdmin';
+import { useTenant } from '../lib/TenantContext';
 
 // Utilidad: comprimir imagen a 400x400 WebP (~50-150KB)
 const compressImage = (file: File, maxSize = 400): Promise<Blob> => {
@@ -95,17 +96,22 @@ const PlantelManagement: React.FC = () => {
     fetchExtras();
   }, []);
 
+  const { tenant } = useTenant();
+  const colegioId = tenant?.id ?? null;
+
   const fetchData = async () => {
     setLoading(true);
     try {
       if (activeTab === 'alumnos') {
         // Filtrar alumnos por año del salón asignado
-        const { data, error } = await supabase
+        const query = supabase
           .from('alumnos')
           .select(`
             *,
             salon:salones(nombre, seccion, anio_academico)
           `);
+        if (colegioId) query.eq('colegio_id', colegioId);
+        const { data, error } = await query;
         if (error) throw error;
         // Filtrar por año del salón (o sin salón asignado)
         const filtered = (data || []).filter((s: any) =>
@@ -113,7 +119,7 @@ const PlantelManagement: React.FC = () => {
         );
         setStudents(filtered);
       } else if (activeTab === 'docentes') {
-        const { data, error } = await supabase
+        const teacherQuery = supabase
           .from('profesores')
           .select(`
             id,
@@ -127,6 +133,8 @@ const PlantelManagement: React.FC = () => {
               id
             )
           `);
+        if (colegioId) teacherQuery.eq('colegio_id', colegioId);
+        const { data, error } = await teacherQuery;
         if (error) throw error;
         const flatTeachers = data?.map((p: any) => ({
           ...p,
@@ -139,13 +147,15 @@ const PlantelManagement: React.FC = () => {
         setTeachers(flatTeachers);
 
       } else if (activeTab === 'salones') {
-        const { data, error } = await supabase
+        const salonQuery = supabase
           .from('salones')
           .select(`
             *,
             tutor:usuarios(nombre_completo)
           `)
           .eq('anio_academico', selectedYear);
+        if (colegioId) salonQuery.eq('colegio_id', colegioId);
+        const { data, error } = await salonQuery;
         if (error) throw error;
         setClassrooms(data || []);
       } else if (activeTab === 'asignaciones') {
@@ -393,7 +403,8 @@ const PlantelManagement: React.FC = () => {
           direccion: formData.direccion,
           fecha_nacimiento: formData.fecha_nacimiento,
           genero: formData.genero,
-          qr_token: 'auto'
+          qr_token: 'auto',
+          colegio_id: colegioId
         }]).select().single();
 
         if (newStudent) {
@@ -523,7 +534,8 @@ const PlantelManagement: React.FC = () => {
           nombre: gradoBase,
           seccion: nextSection,
           anio_academico: new Date().getFullYear(),
-          tutor_id: formData.tutor_id || null
+          tutor_id: formData.tutor_id || null,
+          colegio_id: colegioId
         }]);
         if (error) throw error;
         alert(`Sección ${nextSection} creada para ${gradoBase}`);
@@ -546,7 +558,8 @@ const PlantelManagement: React.FC = () => {
             email: formData.email,
             role: 'docente',
             telefono: formData.telefono,
-            must_change_password: true
+            must_change_password: true,
+            colegio_id: colegioId
           }]);
           if (userError) throw userError;
         } catch (authErr: any) {
@@ -557,7 +570,8 @@ const PlantelManagement: React.FC = () => {
             email: formData.email,
             role: 'docente',
             telefono: formData.telefono,
-            must_change_password: true
+            must_change_password: true,
+            colegio_id: colegioId
           }]).select().single();
           if (userError) throw userError;
           userId = newUser.id;
@@ -567,7 +581,8 @@ const PlantelManagement: React.FC = () => {
         const { error: profError } = await supabase.from('profesores').insert([{
           usuario_id: userId,
           especialidad: formData.especialidad,
-          dni: formData.dni
+          dni: formData.dni,
+          colegio_id: colegioId
         }]);
         if (profError) throw profError;
       } else if (activeTab === 'asignaciones') {
@@ -582,7 +597,7 @@ const PlantelManagement: React.FC = () => {
           if (existingCurso) {
             cursoId = existingCurso.id;
           } else {
-            const { data: newCurso, error: cursoErr } = await supabase.from('cursos').insert([{ nombre: cursoNombre }]).select().single();
+            const { data: newCurso, error: cursoErr } = await supabase.from('cursos').insert([{ nombre: cursoNombre, colegio_id: colegioId }]).select().single();
             if (cursoErr) throw cursoErr;
             cursoId = newCurso.id;
           }

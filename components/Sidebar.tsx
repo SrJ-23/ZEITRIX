@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { Role } from '../types';
+import { useTenant } from '../lib/TenantContext';
 
 interface SidebarProps {
   user: { name: string; role: Role };
@@ -24,6 +25,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, isOpen, onClose }) => {
+  const { tenant } = useTenant();
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['superadmin', 'admin', 'docente', 'padre'] },
     { name: 'Mi Hijo/a', path: '/parent', icon: Users, roles: ['padre'] },
@@ -58,10 +60,16 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, isOpen, onClose }) =>
         {/* Header con botón cerrar en móvil */}
         <div className="p-8 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-lg">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-xl font-black tracking-tighter">ZEI<span className="text-indigo-400">TRIX</span></h1>
+            {tenant?.logo_url ? (
+              <img src={tenant.logo_url} alt={tenant.nombre} className="w-10 h-10 rounded-2xl shadow-lg object-cover" />
+            ) : (
+              <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-lg">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+            )}
+            <h1 className="text-xl font-black tracking-tighter">
+              {tenant ? <span className="text-white">{tenant.nombre}</span> : <>ZEI<span className="text-indigo-400">TRIX</span></>}
+            </h1>
           </div>
           <button
             onClick={onClose}

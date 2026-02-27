@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, GraduationCap, AlertTriangle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import QRRegistration from './components/QRRegistration';
@@ -15,8 +15,10 @@ import PaymentsManagement from './components/PaymentsManagement';
 import ParentDashboard from './components/ParentDashboard';
 import { User, Role } from './types';
 import { supabase } from './lib/supabase';
+import { useTenant } from './lib/TenantContext';
 
 const App: React.FC = () => {
+  const { tenant, loading: tenantLoading, error: tenantError } = useTenant();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -91,9 +93,23 @@ const App: React.FC = () => {
     setUser(null);
   };
 
-  if (loading) return (
+  if (loading || tenantLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-950">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+    </div>
+  );
+
+  // Colegio no encontrado (subdominio inválido)
+  if (tenantError) return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-950 p-6">
+      <div className="text-center max-w-md">
+        <div className="bg-red-500/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <AlertTriangle className="w-10 h-10 text-red-400" />
+        </div>
+        <h1 className="text-2xl font-black text-white mb-2">Institución No Encontrada</h1>
+        <p className="text-slate-400 text-sm mb-6">{tenantError}</p>
+        <p className="text-slate-500 text-xs">Verifique la URL o contacte al administrador.</p>
+      </div>
     </div>
   );
 

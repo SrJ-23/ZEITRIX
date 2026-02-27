@@ -3,8 +3,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Camera, ShieldCheck, AlertCircle, CheckCircle2, Search, Clock, Users, UserCheck, Loader2 } from 'lucide-react';
 import { registerAttendance, justifyAttendance, AttendanceResult } from '../services/attendanceService';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 
 const QRRegistration: React.FC<{ user?: any }> = ({ user }) => {
+  const { tenant } = useTenant();
+  const colegioId = tenant?.id ?? null;
   const [inputToken, setInputToken] = useState('');
   const [lastResult, setLastResult] = useState<AttendanceResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,10 +51,12 @@ const QRRegistration: React.FC<{ user?: any }> = ({ user }) => {
       if (!salones || salones.length === 0) {
         // Si es admin/superadmin, mostrar todos los alumnos
         if (user.role === 'superadmin' || user.role === 'admin') {
-          const { data: allStudents } = await supabase
+          const allStudentsQ = supabase
             .from('alumnos')
             .select('id, nombres, apellidos, salon:salones(nombre, seccion)')
             .order('nombres');
+          if (colegioId) allStudentsQ.eq('colegio_id', colegioId);
+          const { data: allStudents } = await allStudentsQ;
           setTutoredStudents(allStudents || []);
         }
         return;
@@ -168,8 +173,8 @@ const QRRegistration: React.FC<{ user?: any }> = ({ user }) => {
 
               {/* Badge de estado */}
               <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest ${lastResult.estado === 'tardanza'
-                  ? 'bg-amber-500/10 text-amber-400'
-                  : 'bg-green-500/10 text-green-400'
+                ? 'bg-amber-500/10 text-amber-400'
+                : 'bg-green-500/10 text-green-400'
                 }`}>
                 <span className={`w-2 h-2 rounded-full animate-ping ${lastResult.estado === 'tardanza' ? 'bg-amber-500' : 'bg-green-500'}`}></span>
                 {lastResult.estado === 'tardanza' ? 'TARDANZA — Después de 8:00 AM' : 'PUNTUAL'}

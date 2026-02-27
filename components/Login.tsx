@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { GraduationCap, ShieldCheck, Lock, Mail, Loader2, KeyRound } from 'lucide-react';
 import { Role, User as UserType } from '../types';
 import { supabase } from '../lib/supabase';
+import { useTenant } from '../lib/TenantContext';
 
 const Login: React.FC<{ onLogin: (user: UserType) => void }> = ({ onLogin }) => {
+  const { tenant } = useTenant();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -193,10 +195,16 @@ const Login: React.FC<{ onLogin: (user: UserType) => void }> = ({ onLogin }) => 
 
       <div className="max-w-md w-full bg-white rounded-[40px] p-12 shadow-2xl relative z-10 border border-white/20">
         <div className="text-center mb-10">
-          <div className="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200">
-            <GraduationCap className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">ZEI<span className="text-indigo-600">TRIX</span></h1>
+          {tenant?.logo_url ? (
+            <img src={tenant.logo_url} alt={tenant.nombre} className="w-20 h-20 rounded-3xl mx-auto mb-6 shadow-xl object-cover" />
+          ) : (
+            <div className="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200">
+              <GraduationCap className="w-10 h-10 text-white" />
+            </div>
+          )}
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">
+            {tenant ? tenant.nombre : <>ZEI<span className="text-indigo-600">TRIX</span></>}
+          </h1>
           <p className="text-slate-400 font-medium text-sm mt-2">Ingrese sus credenciales para acceder</p>
         </div>
 

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sendWhatsAppMessage } from '../services/wahaService';
+import { useTenant } from '../lib/TenantContext';
 
 const CONCEPTOS = [
     { key: 'matricula', label: 'Matrícula' },
@@ -20,6 +21,8 @@ const CONCEPTOS = [
 ];
 
 const PaymentsManagement: React.FC = () => {
+    const { tenant } = useTenant();
+    const colegioId = tenant?.id ?? null;
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'dashboard' | 'detail'>('dashboard');
     const [searchTerm, setSearchTerm] = useState('');
@@ -45,11 +48,15 @@ const PaymentsManagement: React.FC = () => {
     const loadDashboardData = async () => {
         setLoading(true);
         try {
-            const [salonsRes, studentsRes, paymentsRes] = await Promise.all([
-                supabase.from('salones').select('id, nombre, seccion').order('nombre'),
-                supabase.from('alumnos').select('id, nombres, apellidos, salon_id, salon:salones(nombre, seccion)'),
-                supabase.from('pagos').select('*').eq('anio_academico', currentYear)
-            ]);
+            const salonsQ = supabase.from('salones').select('id, nombre, seccion').order('nombre');
+            const studentsQ = supabase.from('alumnos').select('id, nombres, apellidos, salon_id, salon:salones(nombre, seccion)');
+            const paymentsQ = supabase.from('pagos').select('*').eq('anio_academico', currentYear);
+            if (colegioId) {
+                salonsQ.eq('colegio_id', colegioId);
+                studentsQ.eq('colegio_id', colegioId);
+                paymentsQ.eq('colegio_id', colegioId);
+            }
+            const [salonsRes, studentsRes, paymentsRes] = await Promise.all([salonsQ, studentsQ, paymentsQ]);
             setSalons(salonsRes.data || []);
             setAllStudents(studentsRes.data || []);
             setAllPayments(paymentsRes.data || []);
